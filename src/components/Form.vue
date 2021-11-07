@@ -5,28 +5,28 @@
     <div class="row">
       <div class="column">
         <label for="name"> Имя </label>
-        <input id="name" />
+        <input id="name" v-model="user.name" />
       </div>
 
       <div class="column">
         <label for="surname"> Фамилия </label>
-        <input id="surname" />
+        <input id="surname" v-model="user.surname" />
       </div>
 
       <div class="column">
         <label for="patronymic"> Отчество </label>
-        <input id="patronymic" />
+        <input id="patronymic" v-model="user.patronymic" />
       </div>
     </div>
 
     <div class="column">
       <label for="age"> Дата рождения </label>
-      <input id="age" />
+      <input id="age" v-model="user.age" placeholder="дд.мм.гггг" />
     </div>
 
     <div class="column">
       <label for="mail"> E-mail </label>
-      <input id="mail" />
+      <input id="mail" v-model="user.mail" />
     </div>
 
     <div class="column">
@@ -56,10 +56,18 @@
     <div class="column">
       <label for="citizenship"> Гражданство </label>
       <div class="citizenship-block" v-click-outside="hideDropdown">
-        <input id="citizenship" @focus="isDropdownOpen = true" />
-        <div v-if="isDropdownOpen" class="skill-selector___dropdown">
+        <input
+          id="citizenship"
+          @focus="isDropdownOpen = true"
+          v-model="user.citizenship"
+        />
+        <div v-if="isDropdownOpen">
           <ul>
-            <li v-for="ctz in citizenshipList" :key="ctz.uid">
+            <li
+              v-for="ctz in citizenshipList"
+              :key="ctz.uid"
+              @click="ctzClick(ctz)"
+            >
               {{ ctz.nationality }}
             </li>
           </ul>
@@ -67,22 +75,65 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="row" v-if="user.citizenship === 'Russia'">
       <div class="column">
         <label for="passportSeries"> Серия паспорта </label>
-        <input id="passportSeries" />
+        <input id="passportSeries" v-model="user.pasport.series" />
       </div>
 
       <div class="column">
         <label for="passportNumber"> Номер паспорта </label>
-        <input id="passportNumber" />
+        <input id="passportNumber" v-model="user.pasport.number" />
       </div>
 
       <div class="column">
         <label for="passportDate"> Дата выдачи </label>
-        <input id="passportDate" />
+        <input
+          id="passportDate"
+          v-model="user.pasport.date"
+          placeholder="дд.мм.гггг"
+        />
       </div>
     </div>
+
+    <template v-if="user.citizenship && user.citizenship !== 'Russia'">
+      <div class="row">
+        <div class="column">
+          <label for="latSurname"> Фамилия на латинице </label>
+          <input id="latSurname" v-model="user.latSurname" />
+        </div>
+
+        <div class="column">
+          <label for="latName"> Имя на латинице </label>
+          <input id="latName" v-model="user.latName" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="column">
+          <label for="passportNumber"> Номер паспорта </label>
+          <input id="passportNumber" v-model="user.pasport.number" />
+        </div>
+
+        <div class="column">
+          <label for="passportCountry"> Страна выдачи </label>
+          <select id="passportCountry" v-model="user.pasport.country">
+            <option v-for="ctz in citizenshipList" :key="ctz.uid">
+              {{ ctz.nationality }}
+            </option>
+          </select>
+        </div>
+
+        <div class="column">
+          <label for="passportType"> Тип паспорта </label>
+          <select id="passportType" v-model="user.pasport.type">
+            <option v-for="type in passportTypes" :key="type.id">
+              {{ type.type }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </template>
 
     <div class="column">
       <label for="changeName"> Меняли ли фамилию или имя </label>
@@ -106,15 +157,17 @@
       </div>
     </div>
 
-    <div class="row">
-      <div class="column">
-        <label for="newName"> Имя </label>
-        <input id="newName" />
-      </div>
+    <div class="change-block" v-if="user.changeName === 'true'">
+      <div class="row">
+        <div class="column">
+          <label for="newName"> Имя </label>
+          <input id="newName" v-model="user.newName" />
+        </div>
 
-      <div class="column">
-        <label for="newSurname"> Фамилия </label>
-        <input id="newSurname" />
+        <div class="column">
+          <label for="newSurname"> Фамилия </label>
+          <input id="newSurname" v-model="user.newSurname" />
+        </div>
       </div>
     </div>
 
@@ -125,6 +178,7 @@
 <script>
 import ClickOutside from "vue-click-outside";
 import citizenships from "../assets/data/citizenships.json";
+import passportTypes from "../assets/data/passport-types.json";
 
 export default {
   directives: {
@@ -134,6 +188,7 @@ export default {
     return {
       isDropdownOpen: false,
       citizenshipList: citizenships,
+      passportTypes: passportTypes,
       user: {
         name: "",
         surname: "",
@@ -141,12 +196,31 @@ export default {
         age: "",
         mail: "",
         gender: "",
+        citizenship: "",
+        pasport: {
+          series: "",
+          number: "",
+          date: "",
+          type: "",
+          country: "",
+        },
+        latName: "",
+        latSurname: "",
         changeName: "",
+        newName: "",
+        newSurname: "",
       },
     };
   },
   methods: {
     hideDropdown() {
+      this.isDropdownOpen = false;
+    },
+    formSubmit() {
+      console.log(this.user);
+    },
+    ctzClick(el) {
+      this.user.citizenship = el.nationality;
       this.isDropdownOpen = false;
     },
   },

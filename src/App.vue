@@ -34,18 +34,21 @@ body,
   box-sizing: border-box;
 }
 
-input {
+input,
+select {
   max-width: 600px;
   border-radius: 6px;
   border: 1px solid #ccc;
   padding: 5px;
 }
 
-input:focus {
+input:focus,
+select:focus {
   outline: none;
 }
 
-li {
+li,
+option {
   list-style-type: none;
   padding: 5px;
   cursor: pointer;
