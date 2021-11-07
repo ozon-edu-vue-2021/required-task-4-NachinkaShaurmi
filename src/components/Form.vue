@@ -58,13 +58,13 @@
       <div class="citizenship-block" v-click-outside="hideDropdown">
         <input
           id="citizenship"
+          v-model="ctzSearch"
           @focus="isDropdownOpen = true"
-          v-model="user.citizenship"
         />
         <div v-if="isDropdownOpen">
           <ul>
             <li
-              v-for="ctz in citizenshipList"
+              v-for="ctz in filtredCtzList"
               :key="ctz.uid"
               @click="ctzClick(ctz)"
             >
@@ -179,6 +179,7 @@
 import ClickOutside from "vue-click-outside";
 import citizenships from "../assets/data/citizenships.json";
 import passportTypes from "../assets/data/passport-types.json";
+import debounce from "../helpers/debounce";
 
 export default {
   directives: {
@@ -189,6 +190,7 @@ export default {
       isDropdownOpen: false,
       citizenshipList: citizenships,
       passportTypes: passportTypes,
+      ctzSearch: "",
       user: {
         name: "",
         surname: "",
@@ -210,6 +212,8 @@ export default {
         newName: "",
         newSurname: "",
       },
+      filtredCtzList: citizenships,
+      debouncedFilterList: null,
     };
   },
   methods: {
@@ -221,8 +225,22 @@ export default {
     },
     ctzClick(el) {
       this.user.citizenship = el.nationality;
+      this.ctzSearch = el.nationality;
       this.isDropdownOpen = false;
     },
+    filterList(newValue) {
+      this.filtredCtzList = citizenships.filter((el) =>
+        el.nationality.toLowerCase().includes(newValue.toLowerCase())
+      );
+    },
+  },
+  watch: {
+    ctzSearch(newValue) {
+      this.debouncedFilterList(newValue);
+    },
+  },
+  created() {
+    this.debouncedFilterList = debounce(this.filterList, 1000);
   },
 };
 </script>
