@@ -5,28 +5,28 @@
     <div class="row">
       <div class="column">
         <label for="name"> Имя </label>
-        <input id="name" v-model="user.name" />
+        <input id="name" v-model="user.name" ref="name" />
       </div>
 
       <div class="column">
         <label for="surname"> Фамилия </label>
-        <input id="surname" v-model="user.surname" />
+        <input id="surname" v-model="user.surname" ref="surname" />
       </div>
 
       <div class="column">
         <label for="patronymic"> Отчество </label>
-        <input id="patronymic" v-model="user.patronymic" />
+        <input id="patronymic" v-model="user.patronymic" ref="patronymic" />
       </div>
     </div>
 
     <div class="column">
       <label for="age"> Дата рождения </label>
-      <input id="age" v-model="user.age" placeholder="дд.мм.гггг" />
+      <input id="age" v-model="user.age" placeholder="дд.мм.гггг" ref="age" />
     </div>
 
     <div class="column">
       <label for="mail"> E-mail </label>
-      <input id="mail" v-model="user.mail" />
+      <input id="mail" v-model="user.mail" type="email" ref="mail" />
     </div>
 
     <div class="column">
@@ -56,11 +56,7 @@
     <div class="column">
       <label for="citizenship"> Гражданство </label>
       <div class="citizenship-block" v-click-outside="hideDropdown">
-        <input
-          id="citizenship"
-          v-model="ctzSearch"
-          @focus="isDropdownOpen = true"
-        />
+        <input id="citizenship" v-model="ctzSearch" @focus="citizenshipFocus" />
         <div v-if="isDropdownOpen">
           <ul>
             <li
@@ -78,19 +74,27 @@
     <div class="row" v-if="user.citizenship === 'Russia'">
       <div class="column">
         <label for="passportSeries"> Серия паспорта </label>
-        <input id="passportSeries" v-model="user.pasport.series" />
+        <input
+          id="passportSeries"
+          v-model="user.passport.series"
+          ref="passportSeries"
+        />
       </div>
 
       <div class="column">
         <label for="passportNumber"> Номер паспорта </label>
-        <input id="passportNumber" v-model="user.pasport.number" />
+        <input
+          id="passportNumber"
+          v-model="user.passport.number"
+          ref="passportNumberRus"
+        />
       </div>
 
       <div class="column">
         <label for="passportDate"> Дата выдачи </label>
         <input
           id="passportDate"
-          v-model="user.pasport.date"
+          v-model="user.passport.date"
           placeholder="дд.мм.гггг"
         />
       </div>
@@ -100,24 +104,28 @@
       <div class="row">
         <div class="column">
           <label for="latSurname"> Фамилия на латинице </label>
-          <input id="latSurname" v-model="user.latSurname" />
+          <input id="latSurname" v-model="user.latSurname" ref="latSurname" />
         </div>
 
         <div class="column">
           <label for="latName"> Имя на латинице </label>
-          <input id="latName" v-model="user.latName" />
+          <input id="latName" v-model="user.latName" ref="latName" />
         </div>
       </div>
 
       <div class="row">
         <div class="column">
           <label for="passportNumber"> Номер паспорта </label>
-          <input id="passportNumber" v-model="user.pasport.number" />
+          <input
+            id="passportNumber"
+            v-model="user.passport.number"
+            ref="passportNumberNotRus"
+          />
         </div>
 
         <div class="column">
           <label for="passportCountry"> Страна выдачи </label>
-          <select id="passportCountry" v-model="user.pasport.country">
+          <select id="passportCountry" v-model="user.passport.country">
             <option v-for="ctz in citizenshipList" :key="ctz.uid">
               {{ ctz.nationality }}
             </option>
@@ -126,7 +134,7 @@
 
         <div class="column">
           <label for="passportType"> Тип паспорта </label>
-          <select id="passportType" v-model="user.pasport.type">
+          <select id="passportType" v-model="user.passport.type">
             <option v-for="type in passportTypes" :key="type.id">
               {{ type.type }}
             </option>
@@ -160,13 +168,17 @@
     <div class="change-block" v-if="user.changeName === 'true'">
       <div class="row">
         <div class="column">
-          <label for="newName"> Имя </label>
-          <input id="newName" v-model="user.newName" />
+          <label for="prevName"> Предыдущее имя </label>
+          <input id="prevName" v-model="user.prevName" ref="prevName" />
         </div>
 
         <div class="column">
-          <label for="newSurname"> Фамилия </label>
-          <input id="newSurname" v-model="user.newSurname" />
+          <label for="prevSurname"> Предыдущяя фамилия </label>
+          <input
+            id="prevSurname"
+            v-model="user.prevSurname"
+            ref="prevSurname"
+          />
         </div>
       </div>
     </div>
@@ -199,7 +211,7 @@ export default {
         mail: "",
         gender: "",
         citizenship: "",
-        pasport: {
+        passport: {
           series: "",
           number: "",
           date: "",
@@ -209,22 +221,69 @@ export default {
         latName: "",
         latSurname: "",
         changeName: "",
-        newName: "",
-        newSurname: "",
+        prevName: "",
+        prevSurname: "",
       },
       filtredCtzList: citizenships,
       debouncedFilterList: null,
+      validation: null,
     };
   },
   methods: {
     hideDropdown() {
+      this.ctzSearch = this.user.citizenship || "";
       this.isDropdownOpen = false;
     },
+    citizenshipFocus() {
+      this.ctzSearch = "";
+      this.filtredCtzList = citizenships;
+      this.isDropdownOpen = true;
+    },
     formSubmit() {
-      console.log(this.user);
+      const EMAIL_REG_EXP = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const CYRILLIC = /^[а-яА-я]+$/;
+      const LAT = /^[a-zA-Z]+$/;
+      const PASS_SERIES = /^\d{4}$/;
+      const PASS_NUMBER_RUS = /^\d{6}$/;
+      const PASS_NUMBER_NOT_RUS = /.*/;
+
+      this.validation(CYRILLIC, this.user.name, "name");
+      this.validation(CYRILLIC, this.user.surname, "surname");
+      this.validation(CYRILLIC, this.user.patronymic, "patronymic");
+      this.validation(EMAIL_REG_EXP, this.user.mail, "mail");
+
+      if (this.user.citizenship === "Russia") {
+        this.validation(
+          PASS_SERIES,
+          this.user.passport.series,
+          "passportSeries"
+        );
+        this.validation(
+          PASS_NUMBER_RUS,
+          this.user.passport.number,
+          "passportNumberRus"
+        );
+      }
+
+      if (this.user.citizenship && this.user.citizenship !== "Russia") {
+        this.validation(LAT, this.user.latName, "latName");
+        this.validation(LAT, this.user.latSurname, "latSurname");
+        this.validation(
+          PASS_NUMBER_NOT_RUS,
+          this.user.passport.number,
+          "passportNumberNotRus"
+        );
+      }
+      if (this.user.changeName === "true") {
+        this.validation(CYRILLIC, this.user.prevName, "prevName");
+      }
+      if (this.user.changeName === "true") {
+        this.validation(CYRILLIC, this.user.prevSurname, "prevSurname");
+      }
     },
     ctzClick(el) {
       this.user.citizenship = el.nationality;
+      this.user.passport.number = "";
       this.ctzSearch = el.nationality;
       this.isDropdownOpen = false;
     },
@@ -241,6 +300,12 @@ export default {
   },
   created() {
     this.debouncedFilterList = debounce(this.filterList, 1000);
+    this.validation = (regExp, value, refName) => {
+      regExp.test(value)
+        ? (this.$refs[refName].classList.value = "")
+        : (this.$refs[refName].classList.value = "invalid");
+      console.log(refName, regExp.test(value));
+    };
   },
 };
 </script>
@@ -291,5 +356,9 @@ button {
 
 button:hover {
   background-color: blue;
+}
+
+.invalid {
+  background-color: rgba(255, 0, 0, 0.3);
 }
 </style>
