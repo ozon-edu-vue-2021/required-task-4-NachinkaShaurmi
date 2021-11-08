@@ -189,6 +189,7 @@
 
 <script>
 import ClickOutside from "vue-click-outside";
+import { DateTime } from "luxon";
 import citizenships from "../assets/data/citizenships.json";
 import passportTypes from "../assets/data/passport-types.json";
 import debounce from "../helpers/debounce";
@@ -280,6 +281,22 @@ export default {
       if (this.user.changeName === "true") {
         this.validation(CYRILLIC, this.user.prevSurname, "prevSurname");
       }
+
+      const [day, month, year] = this.user.age.split(".");
+      const notValid =
+        Number.isNaN(+day) || Number.isNaN(+month) || Number.isNaN(+year);
+      if (notValid) return (this.$refs["age"].classList.value = "invalid");
+
+      const dateFromForm = DateTime.fromObject({
+        year: year,
+        month: month,
+        day: day,
+      });
+      const currentDate = DateTime.now();
+
+      dateFromForm.isValid && currentDate > dateFromForm
+        ? (this.$refs["age"].classList.value = "")
+        : (this.$refs["age"].classList.value = "invalid");
     },
     ctzClick(el) {
       this.user.citizenship = el.nationality;
@@ -304,7 +321,6 @@ export default {
       regExp.test(value)
         ? (this.$refs[refName].classList.value = "")
         : (this.$refs[refName].classList.value = "invalid");
-      console.log(refName, regExp.test(value));
     };
   },
 };
